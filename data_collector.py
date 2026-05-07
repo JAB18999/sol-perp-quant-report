@@ -5,7 +5,8 @@ import os
 import pytz
 
 # ==================== 配置 ====================
-SYMBOL = 'SOL/USDT:USDT'
+# 修改1: 交易对改为 OKX 的永续合约命名
+SYMBOL = 'SOL-USDT-SWAP' 
 TIMEFRAMES = ['15m', '30m', '1h', '2h']
 DAYS = 60
 DATA_DIR = 'data'
@@ -17,18 +18,21 @@ BEIJING_TZ = pytz.timezone('Asia/Shanghai')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 def fetch_data(timeframe):
-    exchange = ccxt.binance({'enableRateLimit': True})
+    # 修改2: 将交易所从 binance 改为 okx
+    exchange = ccxt.okx({'enableRateLimit': True}) 
     filename = f"{DATA_DIR}/SOLUSDT_{timeframe.replace('/', '')}.csv"
-    
     print(f"[{timeframe}] 开始抓取数据...")
 
     try:
         # 每次都抓取最近60天数据（不做增量，强制最新）
         since = int((datetime.now(BEIJING_TZ) - timedelta(days=DAYS)).timestamp() * 1000)
         
-        ohlcv = exchange.fetch_ohlcv(SYMBOL, timeframe, since=since, limit=2000)
+        # fetch_ohlcv 参数保持不变
+        ohlcv = exchange.fetch_ohlcv(SYMBOL, timeframe, since=since, limit=1000)
         
         df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        
+        # 时间戳处理保持不变（ccxt.okx 返回的也是毫秒）
         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms').dt.tz_localize('UTC').dt.tz_convert(BEIJING_TZ)
         
         # 数据清洗
