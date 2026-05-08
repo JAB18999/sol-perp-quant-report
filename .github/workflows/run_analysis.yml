@@ -1,25 +1,28 @@
 name: Run SOL Perp Analysis
 
 on:
-  workflow_dispatch: # 允许手动点击运行
+  workflow_dispatch: # 支持手动点击按钮运行
   push:
     paths:
-      - 'data/*.csv' # 当 data 文件夹有新的 CSV 上传时自动运行
+      - 'data/*.csv' # 当 data 文件夹上传新 CSV 时自动运行
 
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 必须开放写入权限，否则无法提交报告
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12' # 升级到 3.12 以支持最新版 pandas_ta
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install pandas pandas_ta numpy
 
       - name: Run analysis script
@@ -30,5 +33,6 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add data/analysis_report.md
-          git commit -m "自动更新量化分析报告" || exit 0
+          # 只有当报告内容发生变化时才提交，避免报错
+          git commit -m "自动更新 SOL 永续合约量化报告" || exit 0
           git push
