@@ -1,47 +1,37 @@
 name: SOL均值回归回测自动运行
 
-# 触发规则
 on:
-  # 定时每天北京时间 凌晨2点自动执行
   schedule:
     - cron: '0 01 * * *'
-  # 手动仓库页面点按钮也能触发
   workflow_dispatch:
-  # 推送代码到main分支自动运行
   push:
     branches: [ main ]
 
-# 运行环境
 jobs:
   backtest-run:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 关键：授予写入仓库权限
     steps:
-      # 1.拉取整个项目代码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2.安装Python环境
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # 3.安装回测所需依赖
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pandas numpy matplotlib
 
-      # 4.执行均值回归回测脚本
       - name: Run mean reversion backtest
         run: |
           python sol_perp_mean_reversion_backtest.py
 
-      # 5.提交更新后的回测报告到仓库
-      - name: Commit & Push latest report
+      - name: Commit and push report
         run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
           git add data/sol_perp_mean_reversion_backtest_report.md
-          git commit -m "🤖 自动更新均值回归策略回测报告" || echo "无报告变更，跳过提交"
-          git push origin main
+          git commit -m "🤖 Auto update mean reversion backtest report" || true
+          git push
