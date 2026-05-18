@@ -1,8 +1,5 @@
 name: SOL均值回归回测自动运行
-
 on:
-  schedule:
-    - cron: '0 01 * * *'
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -11,10 +8,13 @@ jobs:
   backtest-run:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # 关键：授予写入仓库权限
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,12 +26,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas numpy matplotlib
 
-      - name: Run mean reversion backtest
-        run: |
-          python sol_perp_mean_reversion_backtest.py
+      - name: Run backtest script
+        run: python sol_perp_mean_reversion_backtest.py
 
-      - name: Commit and push report
+      - name: Commit and push
         run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add data/sol_perp_mean_reversion_backtest_report.md
-          git commit -m "🤖 Auto update mean reversion backtest report" || true
-          git push
+          git commit -m "🤖 自动生成均值回归回测报告" || true
+          git push https://${{ github.token }}@github.com/${{ github.repository }}.git HEAD:main
