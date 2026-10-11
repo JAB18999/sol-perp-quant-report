@@ -1,0 +1,44 @@
+name: 🔍 Binance Endpoint Health Check
+
+on:
+  schedule:
+    # 每天早8点和晚8点检查 (北京时间 00:00 和 12:00 UTC)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:  # 支持手动触发
+  repository_dispatch:
+    types: [endpoint-check]
+
+permissions:
+  contents: read
+
+jobs:
+  test-binance-endpoints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 拉取最新代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: |
+          pip install ccxt
+
+      - name: 运行端点测试
+        id: test
+        run: |
+          python test_binance_endpoints.py
+
+      - name: 生成测试报告摘要
+        if: always()
+        run: |
+          echo "### 🔍 Binance API 端点检测报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**检测时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "完整日志请查看上方 '运行端点测试' 步骤" >> $GITHUB_STEP_SUMMARY
