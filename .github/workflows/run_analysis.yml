@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # 支持手动点击按钮运行
   push:
     paths:
-      - 'data/*.csv' # 当 data 文件夹上传新 CSV 时自动运行
+      - 'data/*.csv' # 触发分析：任一 5m/15m/30m/1h/2h 数据文件更新
 
 jobs:
   analyze:
